@@ -1,256 +1,186 @@
+
 <!doctype html>
 <html lang="sv">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Årskullsanalys (åk 6 → åk 9) – Kolada</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <title>Årskullsanalys – Enkel version</title>
   <style>
-    :root { --bg:#f6f7f9; --fg:#0f172a; --muted:#475569; --card:#ffffff; --border:#e5e7eb; --accent:#2563eb; }
-    html,body{height:100%}
-    body{margin:0;background:var(--bg);color:var(--fg);font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif}
-    .wrap{max-width:1100px;margin:0 auto;padding:24px}
-    h1{font-size:22px;margin:0 0 12px}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 2px 8px rgba(15,23,42,.04)}
-    .pad{padding:16px}
-    .row{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;align-items:end}
-    .row>.col-4{grid-column:span 4}
-    .row>.col-3{grid-column:span 3}
-    .row>.col-6{grid-column:span 6}
-    .row>.col-12{grid-column:span 12}
-    @media (max-width:900px){.row{grid-template-columns:1fr}.row>[class^=col-]{grid-column:1 / -1}}
-    label{font-size:12px;color:var(--muted);display:block;margin:0 0 6px}
-    input,select{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:#fff}
-    button{appearance:none;border:0;background:var(--accent);color:#fff;padding:10px 14px;border-radius:10px;font-weight:600;cursor:pointer}
-    button[disabled]{opacity:.6;cursor:not-allowed}
-    .muted{color:var(--muted);font-size:13px}
-    .info{background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;color:#1e40af}
-    .table{width:100%;border-collapse:collapse}
-    .table th,.table td{font-size:14px;text-align:left;padding:10px;border-bottom:1px solid var(--border)}
-    .pos{color:#047857;font-weight:600}
-    .neg{color:#b91c1c;font-weight:600}
-    .pill{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid var(--border);font-size:12px}
-    .tag{background:#f1f5f9;border:1px solid var(--border)}
-    .footer{font-size:12px;color:#64748b}
-    .badge{font-size:11px;padding:2px 6px;border-radius:6px;border:1px solid #e2e8f0;background:#f8fafc;color:#334155}
-    .flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    .gap-sm{gap:6px}
+    body { font-family: sans-serif; background: #f8fafc; color: #0f172a; margin: 0; padding: 2rem; }
+    label { display: block; margin-top: 1rem; font-weight: 600; }
+    input, button { padding: 0.5rem; font-size: 1rem; margin-top: 0.5rem; width: 100%; max-width: 300px; }
+    button { background: #2563eb; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    .muted { font-size: 0.9rem; color: #64748b; margin-top: 0.25rem; }
+    canvas { margin-top: 2rem; background: white; border: 1px solid #e5e7eb; border-radius: 8px; }
+    table { width: 100%; margin-top: 2rem; border-collapse: collapse; }
+    th, td { padding: 0.5rem; border-bottom: 1px solid #e5e7eb; text-align: left; }
+    .pos { color: green; font-weight: bold; }
+    .neg { color: red; font-weight: bold; }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header class="flex gap-sm" style="justify-content:space-between;align-items:center;margin-bottom:12px">
-      <div class="flex gap-sm"><span class="badge">POC</span><h1>Årskullsanalys från Kolada (åk 6 → åk 9)</h1></div>
-      <div class="muted">Single‑file • Ingen backend • Live från Kolada</div>
-    </header>
+  <h1>Årskullsanalys från Kolada (förenklad)</h1>
+  <label for="kommun">Kommunkod</label>
+  <input id="kommun" placeholder="t.ex. 0684 för Sävsjö" />
 
-    <section class="card info pad" style="margin-bottom:12px">
-      <div class="flex">
-        <div style="font-weight:600">Vad visar sidan?</div>
-      </div>
-      <p style="margin:8px 0 0 0;line-height:1.5">
-        Vi jämför andelen elever som klarar alla ämnen i <b>åk 6</b> ett visst år med <b>åk 9</b> <i>tre år senare</i>.
-        Det är en <b>proxy för en årskull</b> (inte individspårning). Skillnadskolumnen visar om andelen ökar (<span class="pos">+</span>)
-        eller minskar (<span class="neg">–</span>) mellan åk 6 och 9. Sidan hoppar automatiskt över år som saknar data (Kolada släpper sent på året).
-      </p>
-    </section>
+  <label><input type="checkbox" id="showNation" /> Visa Riket (0000)</label>
+  <label><input type="checkbox" id="useKoladaPeers" /> Hämta liknande kommuner (grundskola)</label>
 
-    <section class="card pad" style="margin-bottom:12px">
-      <div class="row">
-        <div class="col-4">
-          <label for="kommunSelect">Välj kommun</label>
-          <select id="kommunSelect"></select>
-          <div class="muted" style="margin-top:6px">Riket = <span class="pill tag">0000</span></div>
-        </div>
-        <div class="col-3">
-          <label for="start">Startår</label>
-          <input id="start" type="number" value="2013" />
-        </div>
-        <div class="col-3">
-          <label for="end">Slutår</label>
-          <input id="end" type="number" />
-          <div class="muted" id="endHint" style="margin-top:6px"></div>
-        </div>
-        <div class="col-2" style="display:flex;gap:8px;align-items:end">
-          <button id="fetchBtn">Hämta från Kolada</button>
-        </div>
+  <label for="start">Startår</label>
+  <input id="start" type="number" value="2013" />
+  <label for="end">Slutår</label>
+  <input id="end" type="number" />
+  <div class="muted" id="endHint"></div>
 
-        <div class="col-12"></div>
-        <div class="col-4">
-          <label class="flex" for="showNation" style="gap:8px"><input id="showNation" type="checkbox" /> Visa riket som baslinje</label>
-        </div>
-        <div class="col-4">
-          <label for="compareSelect">Jämförelsekommun</label>
-          <select id="compareSelect"><option value="">Ingen</option></select>
-        </div>
-        <div class="col-4">
-          <label for="peerCodes">Liknande kommuner (kommunkoder, kommaseparerat)</label>
-          <input id="peerCodes" placeholder="t.ex. 0685,0688,0686" />
-          <div class="muted" style="margin-top:6px">Beräknar medelvärde per år (ignorerar saknade värden).</div>
-          <label class="flex" for="useKoladaPeers" style="gap:8px;margin-top:10px"><input id="useKoladaPeers" type="checkbox" /> Hämta "Liknande kommuner – grundskola" från Kolada</label>
-        </div>
-      </div>
-      <div class="muted" style="margin-top:8px">KPI: Åk 6 och Åk 9 “uppnått betygskriterier i alla ämnen” (Totalt, %).</div>
-    </section>
+  <button id="fetchBtn">Hämta från Kolada</button>
 
-    <section class="card pad" style="margin-bottom:12px">
-      <canvas id="chart" height="120"></canvas>
-    </section>
+  <canvas id="chart" height="120"></canvas>
 
-    <section class="card pad" id="tableWrap" style="display:none">
-      <table class="table" id="cohortTable">
-        <thead>
-          <tr>
-            <th>Årskull (åk 6 → åk 9)</th>
-            <th>Åk 6 (%)</th>
-            <th>Åk 9 (%)</th>
-            <th>Skillnad (p.e.)</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-      <div class="footer" style="margin-top:8px">* Proxy-analys: Åk 6 år X matchas mot Åk 9 år X+3. För exakt årskull krävs individdata.</div>
-    </section>
+  <table id="cohortTable" style="display:none">
+    <thead>
+      <tr><th>Årskull</th><th>Åk 6 (%)</th><th>Åk 9 (%)</th><th>Skillnad</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
-    <footer class="footer" style="margin-top:12px">Källa: Kolada API v2. Denna sida använder titelsökning för att hitta KPI‑ID och hämtar därefter värden per kommun och år.</footer>
-  </div>
-
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script>
     const KOLADA_BASE = "https://api.kolada.se/v2";
-
-    const elKommunSelect = document.getElementById('kommunSelect');
-    const elCompareSelect = document.getElementById('compareSelect');
-    const elStart  = document.getElementById('start');
-    const elEnd    = document.getElementById('end');
-    const elEndHint= document.getElementById('endHint');
-    const btn      = document.getElementById('fetchBtn');
+    const elKommun = document.getElementById('kommun');
+    const elStart = document.getElementById('start');
+    const elEnd = document.getElementById('end');
+    const elEndHint = document.getElementById('endHint');
     const elShowNation = document.getElementById('showNation');
-    const elPeer = document.getElementById('peerCodes');
     const elUseKoladaPeers = document.getElementById('useKoladaPeers');
-
-    
-// Funktion: Hämta kommunlista från Kolada API
-async function fetchKommunerFrånKolada() {
-  const res = await fetch(`${KOLADA_BASE}/municipality`);
-  if (!res.ok) throw new Error("Kunde inte hämta kommuner");
-  const data = await res.json();
-  const kommList = {};
-  for (const k of data.values || []) {
-    kommList[k.id] = k.title;
-  }
-  kommList['0000'] = 'Riket'; // Lägg till "Riket" manuellt
-  return kommList;
-}
-
-// Fyll en dropdown <select> med alternativ
-function populateSelect(selectEl, options, includeEmpty=false){
-  selectEl.innerHTML = '';
-  if(includeEmpty) selectEl.appendChild(new Option('Ingen',''));
-  Object.entries(options).forEach(([code,name])=>{
-    selectEl.appendChild(new Option(name, code));
-  });
-}
-
-let kommuner = {};
-
-fetchKommunerFrånKolada().then(data => {
-  kommuner = data;
-  populateSelect(elKommunSelect, kommuner);
-  populateSelect(elCompareSelect, kommuner, true);
-  elKommunSelect.value = '0684'; // ev. standardval
-}).catch(err => {
-  console.error("Fel vid kommunhämtning:", err);
-});
-
+    const btn = document.getElementById('fetchBtn');
 
     const currentYear = new Date().getFullYear();
     elEnd.value = currentYear - 1;
-    elEndHint.textContent = `Initierat till ${currentYear-1} (senaste färdiga året i regel).`;
+    elEndHint.textContent = `Initierat till ${currentYear - 1} (senaste färdiga året i regel).`;
 
     let chart;
 
     async function findKpiIdByTitle(query, mustInclude){
       const url = `${KOLADA_BASE}/kpi?title=${encodeURIComponent(query)}`;
       const res = await fetch(url);
-      if(!res.ok) throw new Error(`Kunde inte hämta KPI-lista (${res.status})`);
       const json = await res.json();
-      const hit = (json.values||[]).find(k => k.title && k.title.toLowerCase().includes(mustInclude.toLowerCase()));
-      return hit?.id || null;
+      return (json.values || []).find(k => k.title.toLowerCase().includes(mustInclude.toLowerCase()))?.id || null;
     }
 
     async function fetchSeries(kpiId, municipalityId, years){
-      if(!kpiId) return [];
       const url = `${KOLADA_BASE}/data/kpi/${kpiId}/municipality/${municipalityId}/year/${years.join(',')}`;
       const res = await fetch(url);
-      if(!res.ok) throw new Error(`Kunde inte hämta data (${res.status})`);
       const json = await res.json();
-      const rows = json.values || [];
-      const arr = rows.map(r => {
-        const tot = (r.values||[]).find(v => v.gender === 'T');
+      return (json.values || []).map(r => {
+        const tot = (r.values || []).find(v => v.gender === 'T');
         return { year: Number(r.period), value: tot?.value ?? null };
-      }).sort((a,b)=>a.year-b.year);
-      return arr;
-    }
-
-    function buildCohorts(ak6, ak9){
-      const map9 = new Map(ak9.map(d=>[d.year,d.value]));
-      return ak6.map(d6 => {
-        const y9 = d6.year + 3;
-        const v9 = map9.get(y9) ?? null;
-        const diff = (v9!=null && d6.value!=null) ? (v9 - d6.value) : null;
-        return { label:`${d6.year} → ${y9}`, v6:d6.value, v9, diff };
       });
     }
 
-    function renderTable(cohorts, opts = {}){
-      const { nat6=null, nat9=null, cmp6=null, cmp9=null, cmpCode=null, peer6=null, peer9=null, peerCount=0 } = opts;
-      const tbody = document.querySelector('#cohortTable tbody');
-      tbody.innerHTML = '';
-      for(const c of cohorts){
-        const tr = document.createElement('tr');
-        const tdC = document.createElement('td'); tdC.textContent = c.label; tr.appendChild(tdC);
-        const td6 = document.createElement('td'); td6.textContent = (c.v6==null? '—' : c.v6); tr.appendChild(td6);
-        const td9 = document.createElement('td'); td9.textContent = (c.v9==null? '—' : c.v9); tr.appendChild(td9);
-        const tdD = document.createElement('td');
-        if(c.diff==null){ tdD.textContent = '—'; }
-        else{ tdD.textContent = c.diff.toFixed(1); tdD.className = c.diff>=0? 'pos' : 'neg'; }
-        tr.appendChild(tdD);
-        tbody.appendChild(tr);
-
-        const y6 = c.label.split(' → ')[0] * 1;
-        const y9 = c.label.split(' → ')[1] * 1;
-        if(nat6 && nat9){
-          const trN = document.createElement('tr');
-          trN.innerHTML = `<td>Riket</td><td>${nat6.get(y6) ?? '—'}</td><td>${nat9.get(y9) ?? '—'}</td><td>${(nat6.get(y6)!=null && nat9.get(y9)!=null)?((nat9.get(y9)-nat6.get(y6)).toFixed(1)):'—'}</td>`;
-          const d = trN.lastElementChild; const val = (nat6.get(y6)!=null && nat9.get(y9)!=null)? (nat9.get(y9)-nat6.get(y6)) : null; if(val!=null) d.className = val>=0? 'pos':'neg';
-          tbody.appendChild(trN);
-        }
-        if(cmp6 && cmp9){
-          const trC = document.createElement('tr');
-          trC.innerHTML = `<td>Jämförelse (${cmpCode})</td><td>${cmp6.get(y6) ?? '—'}</td><td>${cmp9.get(y9) ?? '—'}</td><td>${(cmp6.get(y6)!=null && cmp9.get(y9)!=null)?((cmp9.get(y9)-cmp6.get(y6)).toFixed(1)):'—'}</td>`;
-          const d = trC.lastElementChild; const val = (cmp6.get(y6)!=null && cmp9.get(y9)!=null)? (cmp9.get(y9)-cmp6.get(y6)) : null; if(val!=null) d.className = val>=0? 'pos':'neg';
-          tbody.appendChild(trC);
-        }
-        if(peer6 && peer9){
-          const trP = document.createElement('tr');
-          trP.innerHTML = `<td>Liknande kommuner (N=${peerCount})</td><td>${peer6.get(y6) ?? '—'}</td><td>${peer9.get(y9) ?? '—'}</td><td>${(peer6.get(y6)!=null && peer9.get(y9)!=null)?((peer9.get(y9)-peer6.get(y6)).toFixed(1)):'—'}</td>`;
-          const d = trP.lastElementChild; const val = (peer6.get(y6)!=null && peer9.get(y9)!=null)? (peer9.get(y9)-peer6.get(y6)) : null; if(val!=null) d.className = val>=0? 'pos':'neg';
-          tbody.appendChild(trP);
-        }
-      }
-      document.getElementById('tableWrap').style.display = 'block';
+    async function fetchLiknandeKommuner(kod){
+      const res = await fetch(`${KOLADA_BASE}/municipality_group/GRK/municipality`);
+      if (!res.ok) throw new Error("Kunde inte hämta liknande kommuner från Kolada");
+      const json = await res.json();
+      const lista = json?.values ?? [];
+      const grupp = lista.find(g => g.municipalities?.includes(kod));
+      return grupp?.municipalities?.filter(k => k !== kod) ?? [];
+    }/municipality_group/GRK/municipality`);
+      const json = await res.json();
+      const grupp = json.values.find(g => g.municipalities.includes(kod));
+      return grupp?.municipalities.filter(k => k !== kod) ?? [];
     }
 
-    function renderChart(years, datasets){
+    function buildCohorts(ak6, ak9){
+      const map9 = new Map(ak9.map(d => [d.year, d.value]));
+      return ak6.map(d6 => {
+        const v9 = map9.get(d6.year + 3);
+        const diff = (v9 != null && d6.value != null) ? (v9 - d6.value) : null;
+        return { label: `${d6.year} → ${d6.year + 3}`, v6: d6.value, v9, diff };
+      });
+    }
+
+    function renderTable(cohorts){
+      const tbody = document.querySelector('#cohortTable tbody');
+      tbody.innerHTML = '';
+      for (const c of cohorts){
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${c.label}</td><td>${c.v6 ?? '—'}</td><td>${c.v9 ?? '—'}</td><td class="${c.diff >= 0 ? 'pos' : 'neg'}">${c.diff?.toFixed(1) ?? '—'}</td>`;
+        tbody.appendChild(tr);
+      }
+      document.getElementById('cohortTable').style.display = 'table';
+    }
+
+    function renderChart(years, s6, s9){
       const ctx = document.getElementById('chart').getContext('2d');
       if(chart) chart.destroy();
       chart = new Chart(ctx, {
         type: 'line',
-        data: { labels: years, datasets },
+        data: {
+          labels: years,
+          datasets: [
+            { label: 'Åk 6', data: s6, spanGaps: true },
+            { label: 'Åk 9', data: s9, spanGaps: true }
+          ]
+        },
         options: {
-          responsive: true,
-          interaction: { mode: 'index', intersect: false },
-          scales: { y: { suggestedMin: 0, suggestedMax: 100, ticks: { callback: v => v + '%' } } },
+          scales: {
+            y: { suggestedMin: 0, suggestedMax: 100, ticks: { callback: v => v + '%' } }
+          }
+        }
+      });
+    }
+
+    btn.addEventListener('click', async () => {
+      try {
+        btn.disabled = true; btn.textContent = 'Hämtar...';
+        const kod = elKommun.value.trim();
+        const years = Array.from({length: elEnd.value - elStart.value + 1}, (_, i) => Number(elStart.value) + i);
+        const id6 = await findKpiIdByTitle("Elever i åk 6", "alla ämnen");
+        const id9 = await findKpiIdByTitle("Elever i åk 9", "alla ämnen");
+
+        const main6 = await fetchSeries(id6, kod, years);
+        const main9 = await fetchSeries(id9, kod, years);
+
+        let all6 = [...main6];
+        let all9 = [...main9];
+
+        if (elShowNation.checked) {
+          const nat6 = await fetchSeries(id6, '0000', years);
+          const nat9 = await fetchSeries(id9, '0000', years);
+          all6 = all6.concat(nat6);
+          all9 = all9.concat(nat9);
+        }
+
+        if (elUseKoladaPeers.checked) {
+          const peers = await fetchLiknandeKommuner(kod);
+          const peer6all = await Promise.all(peers.map(k => fetchSeries(id6, k, years)));
+          const peer9all = await Promise.all(peers.map(k => fetchSeries(id9, k, years)));
+
+          const peer6 = years.map(y => {
+            const vals = peer6all.map(p => p.find(r => r.year === y)?.value).filter(v => v != null);
+            return { year: y, value: vals.length ? vals.reduce((a,b)=>a+b)/vals.length : null };
+          });
+
+          const peer9 = years.map(y => {
+            const vals = peer9all.map(p => p.find(r => r.year === y)?.value).filter(v => v != null);
+            return { year: y, value: vals.length ? vals.reduce((a,b)=>a+b)/vals.length : null };
+          });
+
+          all6 = all6.concat(peer6);
+          all9 = all9.concat(peer9);
+        }
+
+        const yearsAll = Array.from(new Set(all6.concat(all9).map(d => d.year))).sort((a,b)=>a-b);
+        const s6 = yearsAll.map(y => all6.find(d => d.year === y)?.value ?? null);
+        const s9 = yearsAll.map(y => all9.find(d => d.year === y)?.value ?? null);
+        renderChart(yearsAll, s6, s9);
+        renderTable(buildCohorts(main6, main9));
+      } catch (err) {
+        alert(err.message || err);
+      } finally {
+        btn.disabled = false; btn.textContent = 'Hämta från Kolada';
+      }
+    });
+  </script>
+</body>
+</html>
