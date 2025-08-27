@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>Årskullsanalys (åk 6 → åk 9) – Kolada</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root { --bg:#f6f7f9; --fg:#0f172a; --muted:#475569; --card:#ffffff; --border:#e5e7eb; --accent:#2563eb; --accent-fg:#fff; --shadow:0 4px 20px rgba(15,23,42,.08)}
+    @media (prefers-color-scheme: dark){
+      :root{ --bg:#0b1220; --fg:#e5e7eb; --muted:#94a3b8; --card:#0f172a; --border:#1f2937; --accent:#60a5fa; --accent-fg:#0b1220; --shadow:0 6px 24px rgba(0,0,0,.35)}
+    }
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--fg);font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;line-height:1.45;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+    .wrap{max-width:1200px;margin:0 auto;padding:20px}
+    @media (min-width:1200px){.wrap{padding:28px}}
+    @media (max-width:480px){.wrap{padding:14px}}
+    h1{font-size:24px;margin:0 0 12px}
+    @media (max-width:600px){h1{font-size:20px}}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow)}
+    .pad{padding:16px}
+    .row{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;align-items:end}
+    @media (max-width:900px){.row{grid-template-columns:1fr;gap:10px}}
+    .row>.col-2{grid-column:span 2}
+    .row>.col-3{grid-column:span 3}
+    .row>.col-4{grid-column:span 4}
+    .row>.col-6{grid-column:span 6}
+    .row>.col-12{grid-column:span 12}
+    @media (max-width:900px){.row>[class^=col-]{grid-column:1/-1}}
+    label{font-size:12px;color:var(--muted);display:block;margin:0 0 6px}
+    .controls input{width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:#fff}
+    @media (prefers-color-scheme: dark){.controls input{background:#0b1220;color:var(--fg)}}
+    .controls input:focus{outline:2px solid var(--accent); box-shadow:0 0 0 3px color-mix(in oklab, var(--accent) 30%, transparent)}
+    button{appearance:none;border:0;background:var(--accent);color:var(--accent-fg);padding:12px 16px;border-radius:12px;font-weight:700;cursor:pointer;transition:transform .05s ease, filter .2s}
+    button:hover{filter:brightness(1.03)}
+    button:active{transform:translateY(1px)}
+    button[disabled]{opacity:.6;cursor:not-allowed}
+    .muted{color:var(--muted);font-size:13px}
+    .info{background:color-mix(in oklab, var(--accent) 12%, var(--bg));border:1px solid color-mix(in oklab, var(--accent) 35%, var(--border));border-radius:12px;color:var(--fg)}
+    .table{width:100%;border-collapse:collapse}
+    .table th,.table td{font-size:14px;text-align:left;padding:12px;border-bottom:1px solid var(--border)}
+    .table thead th{position:sticky;top:0;background:var(--card)}
+    @media (max-width:600px){.table th,.table td{font-size:13px;padding:10px}}
+    .pos{color:#047857;font-weight:600}
+    .neg{color:#b91c1c;font-weight:600}
+    .pill{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid var(--border);font-size:12px}
+    .tag{background:#f1f5f9;border:1px solid var(--border)}
+    .footer{font-size:12px;color:#64748b}
+    .badge{font-size:11px;padding:2px 6px;border-radius:6px;border:1px solid #e2e8f0;background:#f8fafc;color:#334155}
+    .flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .gap-sm{gap:6px}
+    #loading{display:none;position:fixed;inset:0;background:color-mix(in oklab, var(--bg) 70%, transparent);backdrop-filter:blur(2px);z-index:50;align-items:center;justify-content:center}
+    .spinner{width:32px;height:32px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--accent);animation:spin 1s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="flex gap-sm" style="justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div class="flex gap-sm"><span class="badge">POC</span><h1>Årskullsanalys från Kolada (åk 6 → åk 9)</h1></div>
+      <div class="muted">Single-file • Ingen backend • Live från Kolada</div>
+    </header>
+
+    <!-- Loading overlay -->
+    <div id="loading">
+      <div style="display:flex;flex-direction:column;gap:10px;align-items:center">
+        <div class="spinner"></div>
+        <div class="muted">Hämtar data…</div>
+      </div>
+    </div>
+
+    <section class="card info pad" style="margin-bottom:12px">
+      <div class="flex"><div style="font-weight:600">Vad visar sidan?</div></div>
+      <p style="margin:8px 0 0 0;line-height:1.5">
+        Vi jämför andelen elever som klarar alla ämnen i <b>åk 6</b> ett visst år med <b>åk 9</b> <i>tre år senare</i>.
+        Det är en <b>proxy för en årskull</b> (inte individspårning). Skillnadskolumnen visar om andelen ökar (<span class="pos">+</span>)
+        eller minskar (<span class="neg">–</span>) mellan åk 6 och 9. Sidan hoppar automatiskt över år som saknar data (Kolada släpper sent på året).
+      </p>
+    </section>
+
+    <section class="card pad controls" style="margin-bottom:12px">
+      <div class="row">
+        <div class="col-4">
+          <label for="kommun">Kommunkod (SCB/K)</label>
+          <input id="kommun" value="0684" placeholder="t.ex. 0684 för Sävsjö" list="kommunList" />
+          <div class="muted" style="margin-top:6px">Tips: Riket = <span class="pill tag">0000</span></div>
+          <label for="kommunName" style="margin-top:10px">Sök kommunnamn (auto-ifyll kod)</label>
+          <input id="kommunName" placeholder="börja skriva… t.ex. Sävsjö" list="kommunList" />
+        </div>
+        <div class="col-3">
+          <label for="start">Startår</label>
+          <input id="start" type="number" value="2013" />
+        </div>
+        <div class="col-3">
+          <label for="end">Slutår</label>
+          <input id="end" type="number" />
+          <div class="muted" id="endHint" style="margin-top:6px"></div>
+        </div>
+        <div class="col-2" style="display:flex;gap:8px;align-items:end">
+          <button id="fetchBtn">Hämta från Kolada</button>
+        </div>
+
+        <div class="col-12"></div>
+        <div class="col-4">
+          <label class="flex" for="showNation" style="gap:8px"><input id="showNation" type="checkbox" /> Visa riket som baslinje</label>
+        </div>
+        <div class="col-4">
+          <label for="compareCode">Jämförelsekommun (kommunkod)</label>
+          <input id="compareCode" placeholder="t.ex. 0685 för Vetlanda" list="kommunList" />
+          <label for="compareName" style="margin-top:10px">Sök jämförelsekommun (namn)</label>
+          <input id="compareName" placeholder="börja skriva…" list="kommunList" />
+        </div>
+      </div>
+      <datalist id="kommunList"></datalist>
+      <div class="muted" style="margin-top:8px">KPI: Åk 6 och Åk 9 “uppnått betygskriterier i alla ämnen” (Totalt, %).</div>
+    </section>
+
+    <section class="card pad" style="margin-bottom:12px">
+      <canvas id="chart" height="140"></canvas>
+    </section>
+
+    <section class="card pad" id="tableWrap" style="display:none">
+      <table class="table" id="cohortTable">
+        <thead>
+          <tr>
+            <th>Årskull (åk 6 → åk 9)</th>
+            <th>Åk 6 (%)</th>
+            <th>Åk 9 (%)</th>
+            <th>Skillnad (p.e.)</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div class="footer" style="margin-top:8px">* Proxy-analys: Åk 6 år X matchas mot Åk 9 år X+3. För exakt årskull krävs individdata.</div>
+    </section>
+
+    <footer class="footer" style="margin-top:12px">Källa: Kolada API v2. Denna sida använder titelsökning för att hitta KPI-ID och hämtar därefter värden per kommun och år.</footer>
+  </div>
+
+  <script>
+    const KOLADA_BASE = "https://api.kolada.se/v2";
+
+    const elKommun = document.getElementById('kommun');
+    const elStart  = document.getElementById('start');
+    const elEnd    = document.getElementById('end');
+    const elEndHint= document.getElementById('endHint');
+    const btn      = document.getElementById('fetchBtn');
+    const elShowNation = document.getElementById('showNation');
+    const elCompare = document.getElementById('compareCode');
+    const elKommunName = document.getElementB
